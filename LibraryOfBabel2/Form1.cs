@@ -105,6 +105,12 @@ namespace LibraryOfBabel2
 
             int processedPages = 0;
 
+            if (StartHexagon > EndHexagon)
+            {
+                MessageBox.Show("Start hexagon is greater than end hexagon!");
+                return new List<string>(); // return EMPTY list to satisfy the Task<List<string>>
+            }
+
             progressBar1.Minimum = 0;
             progressBar1.Maximum = totalPages;
             progressBar1.Value = 0;
@@ -291,14 +297,22 @@ namespace LibraryOfBabel2
 
         private void txtStartHex_TextChanged_1(object sender, EventArgs e)
         {
-
             if (int.TryParse(txtStartHex.Text, out int value))
+            {
                 StartHexagon = value;
+
+                if (StartHexagon > EndHexagon)
+                {
+                    EndHexagon = StartHexagon;
+                    txtEndHex.Text = EndHexagon.ToString();
+                }
+            }
+
         }
 
         private void txtEndHex_TextChanged(object sender, EventArgs e)
         {
-
+            
             if (int.TryParse(txtEndHex.Text, out int value))
                 EndHexagon = value;
         }
