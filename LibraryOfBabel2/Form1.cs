@@ -12,11 +12,13 @@ namespace LibraryOfBabel2
     {
         private const string Alphabet = "abcdefghijklmnopqrstuvwxyz ,."; // allowed characters
         private const int PageLength = 3200; // characters per page
-        private int MaxHexagons = 0;
+        private int MaxHexagons = 10;
         private const int MaxWalls = 5;
         private const int MaxShelves = 10;
         private const int MaxVolumes = 20;
-        private const int PagesPerVolume = 10;
+        private const int PagesPerVolume = 10; 
+        private bool stopSearch = false;
+
 
         public Form1()
         {
@@ -95,15 +97,15 @@ namespace LibraryOfBabel2
 
             await Task.Run(() =>
             {
-                for (int hex = 0; hex < MaxHexagons; hex++)
+                for (int hex = 0; hex < MaxHexagons && !stopSearch; hex++)
                 {
-                    for (int wall = 0; wall < MaxWalls; wall++)
+                    for (int wall = 0; wall < MaxWalls && !stopSearch; wall++)
                     {
-                        for (int shelf = 0; shelf < MaxShelves; shelf++)
+                        for (int shelf = 0; shelf < MaxShelves && !stopSearch; shelf++)
                         {
-                            for (int vol = 0; vol < MaxVolumes; vol++)
+                            for (int vol = 0; vol < MaxVolumes && !stopSearch; vol++)
                             {
-                                for (int page = 0; page < PagesPerVolume; page++)
+                                for (int page = 0; page < PagesPerVolume && !stopSearch; page++)
                                 {
                                     string content = GeneratePage(hex, wall, shelf, vol, page);
 
@@ -118,7 +120,6 @@ namespace LibraryOfBabel2
                                     }
 
                                     processedPages++;
-
                                     Invoke((Action)(() =>
                                     {
                                         progressBar1.Value = processedPages;
@@ -132,7 +133,6 @@ namespace LibraryOfBabel2
 
             return locations;
         }
-
 
 
         private void ShowPage(string phrase)
@@ -206,11 +206,23 @@ namespace LibraryOfBabel2
             string phrase = txtSearch.Text;
             progressBar1.Value = 0;
 
-            // Perform the full search
-            var results = await SearchLibraryFullAsync(phrase);
+            // Disable controls while searching
+            txtMaxHexagons.Enabled = false;
+            btnSearch.Enabled = false;
 
-            // Display results with "Show Page" buttons
-            DisplayResults(results);
+            stopSearch = false; // reset stop flag
+
+            try
+            {
+                var results = await SearchLibraryFullAsync(phrase);
+
+                DisplayResults(results);
+            }
+            finally
+            {
+                txtMaxHexagons.Enabled = true;
+                btnSearch.Enabled = true;
+            }
         }
 
 
@@ -285,6 +297,12 @@ namespace LibraryOfBabel2
                 MessageBox.Show("Please enter a valid positive integer for Max Hexagons.");
                 txtMaxHexagons.Text = MaxHexagons.ToString();
             }
+        }
+
+        private void cancelBtn_Click(object sender, EventArgs e)
+        {
+
+            stopSearch = true;
         }
     }
 

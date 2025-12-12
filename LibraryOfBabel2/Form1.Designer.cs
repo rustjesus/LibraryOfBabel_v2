@@ -37,6 +37,7 @@
             this.pathTb = new System.Windows.Forms.TextBox();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.txtMaxHexagons = new System.Windows.Forms.TextBox();
+            this.cancelBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnSearch
@@ -101,11 +102,22 @@
             this.txtMaxHexagons.TabIndex = 8;
             this.txtMaxHexagons.TextChanged += new System.EventHandler(this.txtMaxHexagons_TextChanged);
             // 
+            // cancelBtn
+            // 
+            this.cancelBtn.Location = new System.Drawing.Point(661, 101);
+            this.cancelBtn.Name = "cancelBtn";
+            this.cancelBtn.Size = new System.Drawing.Size(95, 23);
+            this.cancelBtn.TabIndex = 9;
+            this.cancelBtn.Text = "Cancel Search";
+            this.cancelBtn.UseVisualStyleBackColor = true;
+            this.cancelBtn.Click += new System.EventHandler(this.cancelBtn_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 466);
+            this.Controls.Add(this.cancelBtn);
             this.Controls.Add(this.txtMaxHexagons);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.pathTb);
@@ -131,6 +143,7 @@
         private System.Windows.Forms.TextBox pathTb;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.TextBox txtMaxHexagons;
+        private System.Windows.Forms.Button cancelBtn;
     }
 }
 
