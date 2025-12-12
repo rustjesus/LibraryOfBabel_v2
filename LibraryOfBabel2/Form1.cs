@@ -10,36 +10,42 @@ namespace LibraryOfBabel2
 {
     public partial class Form1 : Form
     {
-        private const string Alphabet = "abcdefghijklmnopqrstuvwxyz ,."; // allowed characters
-        private const int PageLength = 3200; // characters per page
-        private int MaxHexagons = 10;
+        private const string Alphabet = "abcdefghijklmnopqrstuvwxyz ,."; 
+        private const int PageLength = 3200;
+
+        private int StartHexagon = 0;
+        private int EndHexagon = 10;
+
         private const int MaxWalls = 5;
         private const int MaxShelves = 10;
         private const int MaxVolumes = 20;
-        private const int PagesPerVolume = 10; 
-        private bool stopSearch = false;
+        private const int PagesPerVolume = 10;
 
+        private bool stopSearch = false;
 
         public Form1()
         {
             InitializeComponent();
             flpResults.AutoScroll = true;
-            txtMaxHexagons.Text = MaxHexagons.ToString();
+
+            txtStartHex.Text = StartHexagon.ToString();
+            txtEndHex.Text = EndHexagon.ToString();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-        }
+        private void Form1_Load(object sender, EventArgs e) { }
 
-        // -------------------- Deterministic location from phrase --------------------
-        // -------------------- Deterministic location from phrase --------------------
+        // ---------------------------------------------------------------------
+        // Deterministic location from phrase
+        // ---------------------------------------------------------------------
         private (int hexagon, int wall, int shelf, int volume, int page, int offset) PhraseToLocation(string phrase)
         {
             using (SHA256 sha = SHA256.Create())
             {
                 byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(phrase.ToLower()));
 
-                int hexagon = hash[0] % MaxHexagons;
+                int range = (EndHexagon - StartHexagon) + 1;
+
+                int hexagon = StartHexagon + (hash[0] % range);
                 int wall = hash[1] % MaxWalls;
                 int shelf = hash[2] % MaxShelves;
                 int volume = hash[3] % MaxVolumes;
@@ -50,8 +56,9 @@ namespace LibraryOfBabel2
             }
         }
 
-
-        // -------------------- Generate page --------------------
+        // ---------------------------------------------------------------------
+        // Generate a page
+        // ---------------------------------------------------------------------
         private string GeneratePage(int hexagon, int wall, int shelf, int volume, int page)
         {
             string location = $"{hexagon}-{wall}-{shelf}-{volume}-{page}";
@@ -64,31 +71,38 @@ namespace LibraryOfBabel2
 
             Random rng = new Random(BitConverter.ToInt32(hash, 0));
             StringBuilder sb = new StringBuilder(PageLength);
+
             for (int i = 0; i < PageLength; i++)
                 sb.Append(Alphabet[rng.Next(Alphabet.Length)]);
 
             return sb.ToString();
         }
 
-
-        // -------------------- Search phrase --------------------
+        // ---------------------------------------------------------------------
+        // Quick deterministic search
+        // ---------------------------------------------------------------------
         private List<string> SearchLibrary(string phrase)
         {
             phrase = phrase.ToLower();
             var locations = new List<string>();
 
-            var loc = PhraseToLocation(phrase); // deterministic location
+            var loc = PhraseToLocation(phrase);
             locations.Add($"Hexagon {loc.hexagon}, Wall {loc.wall}, Shelf {loc.shelf}, Volume {loc.volume}, Page {loc.page}");
 
             return locations;
         }
 
+        // ---------------------------------------------------------------------
+        // Full brute-force search
+        // ---------------------------------------------------------------------
         private async Task<List<string>> SearchLibraryFullAsync(string phrase)
         {
             phrase = phrase.ToLower();
             var locations = new List<string>();
 
-            int totalPages = MaxHexagons * MaxWalls * MaxShelves * MaxVolumes * PagesPerVolume;
+            int hexCount = (EndHexagon - StartHexagon + 1);
+            int totalPages = hexCount * MaxWalls * MaxShelves * MaxVolumes * PagesPerVolume;
+
             int processedPages = 0;
 
             progressBar1.Minimum = 0;
@@ -97,7 +111,7 @@ namespace LibraryOfBabel2
 
             await Task.Run(() =>
             {
-                for (int hex = 0; hex < MaxHexagons && !stopSearch; hex++)
+                for (int hex = StartHexagon; hex <= EndHexagon && !stopSearch; hex++)
                 {
                     for (int wall = 0; wall < MaxWalls && !stopSearch; wall++)
                     {
@@ -120,14 +134,13 @@ namespace LibraryOfBabel2
                                     }
 
                                     processedPages++;
-                                    double percent = (processedPages * 100.0) / totalPages; // use double for decimal precision
+                                    double percent = (processedPages * 100.0) / totalPages;
 
                                     Invoke((Action)(() =>
                                     {
                                         progressBar1.Value = processedPages;
                                         loadingPercentLabel.Text = $"Loading: {percent:F2}%";
                                     }));
-
                                 }
                             }
                         }
@@ -138,8 +151,6 @@ namespace LibraryOfBabel2
             return locations;
         }
 
-
-
         private void ShowPage(string phrase)
         {
             var loc = PhraseToLocation(phrase);
@@ -149,9 +160,9 @@ namespace LibraryOfBabel2
             pageForm.Show();
         }
 
-
-
-        // -------------------- Display results --------------------
+        // ---------------------------------------------------------------------
+        // Display results
+        // ---------------------------------------------------------------------
         private void DisplayResults(List<string> locations)
         {
             flpResults.Controls.Clear();
@@ -178,9 +189,9 @@ namespace LibraryOfBabel2
                     Location = new Point(300, 0),
                     AutoSize = true
                 };
+
                 btnShow.Click += (s, e) =>
                 {
-                    // Parse location string
                     var parts = loc.Split(new[] { "Hexagon ", "Wall ", "Shelf ", "Volume ", "Page ", ", " }, StringSplitOptions.RemoveEmptyEntries);
                     int h = int.Parse(parts[0]);
                     int w = int.Parse(parts[1]);
@@ -188,7 +199,6 @@ namespace LibraryOfBabel2
                     int v = int.Parse(parts[3]);
                     int p = int.Parse(parts[4]);
 
-                    // Update the path textbox
                     pathTb.Text = $"Hexagon {h}, Wall {w}, Shelf {sIdx}, Volume {v}, Page {p}";
 
                     string phrase = txtSearch.Text.ToLower();
@@ -198,54 +208,48 @@ namespace LibraryOfBabel2
                     pageForm.Show();
                 };
 
-
                 panel.Controls.Add(lbl);
                 panel.Controls.Add(btnShow);
                 flpResults.Controls.Add(panel);
             }
         }
 
-        // -------------------- Search button --------------------
         private async void btnSearch_Click(object sender, EventArgs e)
         {
             string phrase = txtSearch.Text;
             progressBar1.Value = 0;
 
-            // Disable controls while searching
-            txtMaxHexagons.Enabled = false;
+            txtStartHex.Enabled = false;
+            txtEndHex.Enabled = false;
             btnSearch.Enabled = false;
 
-            stopSearch = false; // reset stop flag
+            stopSearch = false;
 
             try
             {
                 var results = await SearchLibraryFullAsync(phrase);
-
                 DisplayResults(results);
             }
             finally
             {
-                txtMaxHexagons.Enabled = true;
+                txtStartHex.Enabled = true;
+                txtEndHex.Enabled = true;
                 btnSearch.Enabled = true;
             }
         }
 
-
-
-        // -------------------- Load page button --------------------
         private void btnLoadPage_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(pathTb.Text))
             {
-                MessageBox.Show("Please enter a path in the textbox or search for a phrase first.");
+                MessageBox.Show("Please enter a path.");
                 return;
             }
 
-            // Parse the path
             var parts = pathTb.Text.Split(new[] { "Hexagon ", "Wall ", "Shelf ", "Volume ", "Page ", ", " }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 5)
             {
-                MessageBox.Show("Invalid path format.");
+                MessageBox.Show("Invalid path.");
                 return;
             }
 
@@ -255,11 +259,9 @@ namespace LibraryOfBabel2
             int volume = int.Parse(parts[3]);
             int page = int.Parse(parts[4]);
 
-            // Get the phrase from the search box
             string phrase = txtSearch.Text.ToLower();
             int offset = -1;
 
-            // Check if this page is the deterministic page for the phrase
             if (!string.IsNullOrWhiteSpace(phrase))
             {
                 var phraseLoc = PhraseToLocation(phrase);
@@ -273,44 +275,38 @@ namespace LibraryOfBabel2
                 }
                 else
                 {
-                    // The phrase does not belong on this page
                     phrase = null;
                 }
             }
 
-            // Generate page content, inserting the phrase only if offset >= 0
             string pageContent = GeneratePage(hexagon, wall, shelf, volume, page);
-
             PageForm pageForm = new PageForm(pageContent, phrase);
             pageForm.Show();
         }
 
-
-        private void pathTb_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtMaxHexagons_TextChanged(object sender, EventArgs e)
-        {
-            if (int.TryParse(txtMaxHexagons.Text, out int value) && value > 0)
-            {
-                MaxHexagons = value;
-            }
-            else
-            {
-                MessageBox.Show("Please enter a valid positive integer for Max Hexagons.");
-                txtMaxHexagons.Text = MaxHexagons.ToString();
-            }
-        }
-
         private void cancelBtn_Click(object sender, EventArgs e)
         {
-
             stopSearch = true;
+        }
+
+        private void txtStartHex_TextChanged_1(object sender, EventArgs e)
+        {
+
+            if (int.TryParse(txtStartHex.Text, out int value))
+                StartHexagon = value;
+        }
+
+        private void txtEndHex_TextChanged(object sender, EventArgs e)
+        {
+
+            if (int.TryParse(txtEndHex.Text, out int value))
+                EndHexagon = value;
         }
     }
 
+    // ---------------------------------------------------------------------
+    // PageForm (unchanged)
+    // ---------------------------------------------------------------------
     public class PageForm : Form
     {
         private RichTextBox rtbPage;
@@ -331,9 +327,7 @@ namespace LibraryOfBabel2
             this.Controls.Add(rtbPage);
 
             if (!string.IsNullOrEmpty(phrase))
-            {
                 HighlightPhrase(phrase);
-            }
         }
 
         private void HighlightPhrase(string phrase)
@@ -346,11 +340,9 @@ namespace LibraryOfBabel2
                 index += phrase.Length;
             }
 
-            // Deselect text
             rtbPage.SelectionStart = 0;
             rtbPage.SelectionLength = 0;
             rtbPage.SelectionColor = rtbPage.ForeColor;
         }
     }
-
 }
