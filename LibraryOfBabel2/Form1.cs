@@ -316,6 +316,48 @@ namespace LibraryOfBabel2
             if (int.TryParse(txtEndHex.Text, out int value))
                 EndHexagon = value;
         }
+
+        private void saveButton_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(pathTb.Text))
+            {
+                MessageBox.Show("Please enter a path.");
+                return;
+            }
+
+            // Parse the path
+            var parts = pathTb.Text.Split(new[] { "Hexagon ", "Wall ", "Shelf ", "Volume ", "Page ", ", " }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 5)
+            {
+                MessageBox.Show("Invalid path.");
+                return;
+            }
+
+            int hexagon = int.Parse(parts[0]);
+            int wall = int.Parse(parts[1]);
+            int shelf = int.Parse(parts[2]);
+            int volume = int.Parse(parts[3]);
+            int page = int.Parse(parts[4]);
+
+            // Generate the page content
+            string pageContent = GeneratePage(hexagon, wall, shelf, volume, page);
+
+            try
+            {
+                // Save file in the program's folder
+                string fileName = $"Hex{hexagon}_Wall{wall}_Shelf{shelf}_Vol{volume}_Page{page}.txt";
+                string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+
+                System.IO.File.WriteAllText(filePath, pageContent);
+
+                MessageBox.Show($"Page saved successfully to:\n{filePath}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save page: {ex.Message}");
+            }
+        }
+
     }
 
     // ---------------------------------------------------------------------
