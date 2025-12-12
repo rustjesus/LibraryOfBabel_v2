@@ -47,6 +47,7 @@
             this.saveButton = new System.Windows.Forms.Button();
             this.preloadButton = new System.Windows.Forms.Button();
             this.btnSearchSaved = new System.Windows.Forms.Button();
+            this.label5 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // btnSearch
@@ -123,11 +124,11 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(467, 58);
+            this.label1.Location = new System.Drawing.Point(509, 58);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(125, 13);
+            this.label1.Size = new System.Drawing.Size(83, 13);
             this.label1.TabIndex = 10;
-            this.label1.Text = "Start Hexagons (Rooms):";
+            this.label1.Text = "Start Hexagons:";
             // 
             // loadingPercentLabel
             // 
@@ -159,11 +160,11 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(470, 91);
+            this.label4.Location = new System.Drawing.Point(509, 91);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(122, 13);
+            this.label4.Size = new System.Drawing.Size(80, 13);
             this.label4.TabIndex = 14;
-            this.label4.Text = "End Hexagons (Rooms):";
+            this.label4.Text = "End Hexagons:";
             // 
             // txtEndHex
             // 
@@ -189,7 +190,7 @@
             this.preloadButton.Name = "preloadButton";
             this.preloadButton.Size = new System.Drawing.Size(95, 23);
             this.preloadButton.TabIndex = 17;
-            this.preloadButton.Text = "Save Rooms";
+            this.preloadButton.Text = "Save Hexagons";
             this.preloadButton.UseVisualStyleBackColor = true;
             this.preloadButton.Click += new System.EventHandler(this.preloadButton_Click);
             // 
@@ -203,11 +204,21 @@
             this.btnSearchSaved.UseVisualStyleBackColor = true;
             this.btnSearchSaved.Click += new System.EventHandler(this.btnSearchSaved_Click);
             // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(498, 116);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(91, 13);
+            this.label5.TabIndex = 19;
+            this.label5.Text = "(Columns of walls)";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 466);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.btnSearchSaved);
             this.Controls.Add(this.preloadButton);
             this.Controls.Add(this.saveButton);
@@ -253,6 +264,7 @@
         private System.Windows.Forms.Button saveButton;
         private System.Windows.Forms.Button preloadButton;
         private System.Windows.Forms.Button btnSearchSaved;
+        private System.Windows.Forms.Label label5;
     }
 }
 

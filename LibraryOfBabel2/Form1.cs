@@ -381,7 +381,7 @@ namespace LibraryOfBabel2
             preloadButton.Enabled = false;
             stopSearch = false;
 
-            var allPages = new Dictionary<string, string>();
+            string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PreloadedLibrary.json");
 
             int hexCount = (EndHexagon - StartHexagon + 1);
             int totalPages = hexCount * MaxWalls * MaxShelves * MaxVolumes * PagesPerVolume;
@@ -391,43 +391,49 @@ namespace LibraryOfBabel2
             progressBar1.Maximum = totalPages;
             progressBar1.Value = 0;
 
-            await Task.Run(() =>
+            try
             {
-                for (int hex = StartHexagon; hex <= EndHexagon && !stopSearch; hex++)
+                using (var stream = new System.IO.StreamWriter(filePath))
+                using (var writer = new JsonTextWriter(stream))
                 {
-                    for (int wall = 0; wall < MaxWalls && !stopSearch; wall++)
+                    writer.Formatting = Formatting.Indented;
+
+                    writer.WriteStartObject(); // start dictionary
+
+                    for (int hex = StartHexagon; hex <= EndHexagon && !stopSearch; hex++)
                     {
-                        for (int shelf = 0; shelf < MaxShelves && !stopSearch; shelf++)
+                        for (int wall = 0; wall < MaxWalls && !stopSearch; wall++)
                         {
-                            for (int vol = 0; vol < MaxVolumes && !stopSearch; vol++)
+                            for (int shelf = 0; shelf < MaxShelves && !stopSearch; shelf++)
                             {
-                                for (int page = 0; page < PagesPerVolume && !stopSearch; page++)
+                                for (int vol = 0; vol < MaxVolumes && !stopSearch; vol++)
                                 {
-                                    string content = GeneratePage(hex, wall, shelf, vol, page);
-                                    string key = $"{hex}-{wall}-{shelf}-{vol}-{page}";
-                                    allPages[key] = content;
-
-                                    processedPages++;
-                                    double percent = (processedPages * 100.0) / totalPages;
-
-                                    Invoke((Action)(() =>
+                                    for (int page = 0; page < PagesPerVolume && !stopSearch; page++)
                                     {
-                                        progressBar1.Value = processedPages;
-                                        loadingPercentLabel.Text = $"Loading: {percent:F2}%";
-                                    }));
+                                        string content = GeneratePage(hex, wall, shelf, vol, page);
+                                        string key = $"{hex}-{wall}-{shelf}-{vol}-{page}";
+
+                                        writer.WritePropertyName(key);
+                                        writer.WriteValue(content);
+
+                                        processedPages++;
+                                        if (processedPages % 50 == 0 || processedPages == totalPages)
+                                        {
+                                            double percent = (processedPages * 100.0) / totalPages;
+                                            Invoke((Action)(() =>
+                                            {
+                                                progressBar1.Value = processedPages;
+                                                loadingPercentLabel.Text = $"Loading: {percent:F2}%";
+                                            }));
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            });
 
-            try
-            {
-                // Save as PreloadedLibrary.json
-                string json = JsonConvert.SerializeObject(allPages, Formatting.Indented);
-                string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PreloadedLibrary.json");
-                System.IO.File.WriteAllText(filePath, json);
+                    writer.WriteEndObject();
+                }
 
                 MessageBox.Show($"All pages saved successfully to:\n{filePath}");
             }
@@ -459,18 +465,6 @@ namespace LibraryOfBabel2
                 return;
             }
 
-            Dictionary<string, string> allPages;
-            try
-            {
-                string json = System.IO.File.ReadAllText(filePath);
-                allPages = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to load PreloadedLibrary.json: {ex.Message}");
-                return;
-            }
-
             txtStartHex.Enabled = false;
             txtEndHex.Enabled = false;
             btnSearch.Enabled = false;
@@ -478,55 +472,60 @@ namespace LibraryOfBabel2
             stopSearch = false;
 
             var results = new List<string>();
-            object lockObj = new object();
-            int totalPages = allPages.Count;
-            int processedPages = 0;
-
-            progressBar1.Minimum = 0;
-            progressBar1.Maximum = totalPages;
-            progressBar1.Value = 0;
 
             await Task.Run(() =>
             {
-                Parallel.ForEach<KeyValuePair<string, string>>(allPages, delegate (KeyValuePair<string, string> kvp, ParallelLoopState state)
+                int processedPages = 0;
+                int updateInterval = 50; // update progress every 50 pages
+
+                using (var sr = new System.IO.StreamReader(filePath))
+                using (var reader = new JsonTextReader(sr))
                 {
-                    if (stopSearch)
+                    while (reader.Read())
                     {
-                        state.Stop();
-                        return;
-                    }
+                        if (stopSearch) break;
 
-                    if (kvp.Value.IndexOf(phrase, StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        var parts = kvp.Key.Split('-');
-                        string loc = $"Hexagon {parts[0]}, Wall {parts[1]}, Shelf {parts[2]}, Volume {parts[3]}, Page {parts[4]}";
-                        lock (lockObj)
+                        if (reader.TokenType == JsonToken.PropertyName)
                         {
-                            results.Add(loc);
-                        }
-                    }
+                            string key = (string)reader.Value;
 
-                    // Batch UI update every 50 pages
-                    lock (lockObj)
-                    {
-                        processedPages++;
-                        if (processedPages % 50 == 0)
-                        {
-                            double percent = (processedPages * 100.0) / totalPages;
-                            Invoke((MethodInvoker)delegate
+                            if (!reader.Read()) break;
+
+                            string content = reader.Value as string;
+                            if (content != null && content.IndexOf(phrase, StringComparison.OrdinalIgnoreCase) >= 0)
                             {
-                                progressBar1.Value = processedPages;
-                                loadingPercentLabel.Text = $"Searching: {percent:F2}%";
-                            });
+                                var parts = key.Split('-');
+                                string loc = $"Hexagon {parts[0]}, Wall {parts[1]}, Shelf {parts[2]}, Volume {parts[3]}, Page {parts[4]}";
+                                lock (results)
+                                {
+                                    results.Add(loc);
+                                }
+                            }
+
+                            processedPages++;
+
+                            // Update progress every updateInterval pages
+                            if (processedPages % updateInterval == 0)
+                            {
+                                int displayCount = processedPages; // local copy for UI thread
+                                Invoke((Action)(() =>
+                                {
+                                    progressBar1.Value = Math.Min(displayCount, progressBar1.Maximum);
+                                    loadingPercentLabel.Text = $"Processed pages: {displayCount}";
+                                }));
+                            }
                         }
                     }
-                });
 
+                    // Final progress update
+                    Invoke((Action)(() =>
+                    {
+                        progressBar1.Value = Math.Min(processedPages, progressBar1.Maximum);
+                        loadingPercentLabel.Text = $"Processed pages: {processedPages}";
+                    }));
+
+                }
             });
-
-            // Final UI update
-            progressBar1.Value = totalPages;
-            loadingPercentLabel.Text = $"Searching: 100%";
 
             if (results.Count == 0)
                 MessageBox.Show("Phrase not found in preloaded library.");
@@ -538,7 +537,6 @@ namespace LibraryOfBabel2
             btnSearch.Enabled = true;
             btnSearchSaved.Enabled = true;
         }
-
 
 
     }
