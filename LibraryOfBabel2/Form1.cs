@@ -5,6 +5,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Newtonsoft.Json;
+
 
 namespace LibraryOfBabel2
 {
@@ -32,7 +34,13 @@ namespace LibraryOfBabel2
             txtEndHex.Text = EndHexagon.ToString();
         }
 
-        private void Form1_Load(object sender, EventArgs e) { }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+        }
+
+
+
 
         // ---------------------------------------------------------------------
         // Deterministic location from phrase
@@ -344,9 +352,16 @@ namespace LibraryOfBabel2
 
             try
             {
-                // Save file in the program's folder
+                // Create "Pages" folder if it doesn't exist
+                string pagesFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Pages");
+                if (!System.IO.Directory.Exists(pagesFolder))
+                {
+                    System.IO.Directory.CreateDirectory(pagesFolder);
+                }
+
+                // Save file in the "Pages" folder
                 string fileName = $"Hex{hexagon}_Wall{wall}_Shelf{shelf}_Vol{volume}_Page{page}.txt";
-                string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+                string filePath = System.IO.Path.Combine(pagesFolder, fileName);
 
                 System.IO.File.WriteAllText(filePath, pageContent);
 
@@ -357,6 +372,174 @@ namespace LibraryOfBabel2
                 MessageBox.Show($"Failed to save page: {ex.Message}");
             }
         }
+
+
+        private async void preloadButton_Click(object sender, EventArgs e)
+        {
+            txtStartHex.Enabled = false;
+            txtEndHex.Enabled = false;
+            preloadButton.Enabled = false;
+            stopSearch = false;
+
+            var allPages = new Dictionary<string, string>();
+
+            int hexCount = (EndHexagon - StartHexagon + 1);
+            int totalPages = hexCount * MaxWalls * MaxShelves * MaxVolumes * PagesPerVolume;
+            int processedPages = 0;
+
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = totalPages;
+            progressBar1.Value = 0;
+
+            await Task.Run(() =>
+            {
+                for (int hex = StartHexagon; hex <= EndHexagon && !stopSearch; hex++)
+                {
+                    for (int wall = 0; wall < MaxWalls && !stopSearch; wall++)
+                    {
+                        for (int shelf = 0; shelf < MaxShelves && !stopSearch; shelf++)
+                        {
+                            for (int vol = 0; vol < MaxVolumes && !stopSearch; vol++)
+                            {
+                                for (int page = 0; page < PagesPerVolume && !stopSearch; page++)
+                                {
+                                    string content = GeneratePage(hex, wall, shelf, vol, page);
+                                    string key = $"{hex}-{wall}-{shelf}-{vol}-{page}";
+                                    allPages[key] = content;
+
+                                    processedPages++;
+                                    double percent = (processedPages * 100.0) / totalPages;
+
+                                    Invoke((Action)(() =>
+                                    {
+                                        progressBar1.Value = processedPages;
+                                        loadingPercentLabel.Text = $"Loading: {percent:F2}%";
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            try
+            {
+                // Save as PreloadedLibrary.json
+                string json = JsonConvert.SerializeObject(allPages, Formatting.Indented);
+                string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PreloadedLibrary.json");
+                System.IO.File.WriteAllText(filePath, json);
+
+                MessageBox.Show($"All pages saved successfully to:\n{filePath}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save JSON: {ex.Message}");
+            }
+            finally
+            {
+                txtStartHex.Enabled = true;
+                txtEndHex.Enabled = true;
+                preloadButton.Enabled = true;
+            }
+        }
+
+        private async void btnSearchSaved_Click(object sender, EventArgs e)
+        {
+            string phrase = txtSearch.Text.ToLower();
+            if (string.IsNullOrWhiteSpace(phrase))
+            {
+                MessageBox.Show("Please enter a search phrase.");
+                return;
+            }
+
+            string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PreloadedLibrary.json");
+            if (!System.IO.File.Exists(filePath))
+            {
+                MessageBox.Show("PreloadedLibrary.json not found. Please preload the library first.");
+                return;
+            }
+
+            Dictionary<string, string> allPages;
+            try
+            {
+                string json = System.IO.File.ReadAllText(filePath);
+                allPages = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load PreloadedLibrary.json: {ex.Message}");
+                return;
+            }
+
+            txtStartHex.Enabled = false;
+            txtEndHex.Enabled = false;
+            btnSearch.Enabled = false;
+            btnSearchSaved.Enabled = false;
+            stopSearch = false;
+
+            var results = new List<string>();
+            object lockObj = new object();
+            int totalPages = allPages.Count;
+            int processedPages = 0;
+
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = totalPages;
+            progressBar1.Value = 0;
+
+            await Task.Run(() =>
+            {
+                Parallel.ForEach<KeyValuePair<string, string>>(allPages, delegate (KeyValuePair<string, string> kvp, ParallelLoopState state)
+                {
+                    if (stopSearch)
+                    {
+                        state.Stop();
+                        return;
+                    }
+
+                    if (kvp.Value.IndexOf(phrase, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        var parts = kvp.Key.Split('-');
+                        string loc = $"Hexagon {parts[0]}, Wall {parts[1]}, Shelf {parts[2]}, Volume {parts[3]}, Page {parts[4]}";
+                        lock (lockObj)
+                        {
+                            results.Add(loc);
+                        }
+                    }
+
+                    // Batch UI update every 50 pages
+                    lock (lockObj)
+                    {
+                        processedPages++;
+                        if (processedPages % 50 == 0)
+                        {
+                            double percent = (processedPages * 100.0) / totalPages;
+                            Invoke((MethodInvoker)delegate
+                            {
+                                progressBar1.Value = processedPages;
+                                loadingPercentLabel.Text = $"Searching: {percent:F2}%";
+                            });
+                        }
+                    }
+                });
+
+            });
+
+            // Final UI update
+            progressBar1.Value = totalPages;
+            loadingPercentLabel.Text = $"Searching: 100%";
+
+            if (results.Count == 0)
+                MessageBox.Show("Phrase not found in preloaded library.");
+            else
+                DisplayResults(results);
+
+            txtStartHex.Enabled = true;
+            txtEndHex.Enabled = true;
+            btnSearch.Enabled = true;
+            btnSearchSaved.Enabled = true;
+        }
+
+
 
     }
 

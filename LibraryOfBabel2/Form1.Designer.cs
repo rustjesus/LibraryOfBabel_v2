@@ -45,6 +45,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.txtEndHex = new System.Windows.Forms.TextBox();
             this.saveButton = new System.Windows.Forms.Button();
+            this.preloadButton = new System.Windows.Forms.Button();
+            this.btnSearchSaved = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnSearch
@@ -71,9 +73,9 @@
             // 
             // flpResults
             // 
-            this.flpResults.Location = new System.Drawing.Point(12, 55);
+            this.flpResults.Location = new System.Drawing.Point(12, 71);
             this.flpResults.Name = "flpResults";
-            this.flpResults.Size = new System.Drawing.Size(449, 367);
+            this.flpResults.Size = new System.Drawing.Size(449, 351);
             this.flpResults.TabIndex = 4;
             // 
             // btnLoadPage
@@ -157,7 +159,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(464, 91);
+            this.label4.Location = new System.Drawing.Point(470, 91);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(122, 13);
             this.label4.TabIndex = 14;
@@ -181,11 +183,33 @@
             this.saveButton.UseVisualStyleBackColor = true;
             this.saveButton.Click += new System.EventHandler(this.saveButton_Click);
             // 
+            // preloadButton
+            // 
+            this.preloadButton.Location = new System.Drawing.Point(12, 42);
+            this.preloadButton.Name = "preloadButton";
+            this.preloadButton.Size = new System.Drawing.Size(95, 23);
+            this.preloadButton.TabIndex = 17;
+            this.preloadButton.Text = "Save Rooms";
+            this.preloadButton.UseVisualStyleBackColor = true;
+            this.preloadButton.Click += new System.EventHandler(this.preloadButton_Click);
+            // 
+            // btnSearchSaved
+            // 
+            this.btnSearchSaved.Location = new System.Drawing.Point(113, 42);
+            this.btnSearchSaved.Name = "btnSearchSaved";
+            this.btnSearchSaved.Size = new System.Drawing.Size(104, 23);
+            this.btnSearchSaved.TabIndex = 18;
+            this.btnSearchSaved.Text = "Search Saved";
+            this.btnSearchSaved.UseVisualStyleBackColor = true;
+            this.btnSearchSaved.Click += new System.EventHandler(this.btnSearchSaved_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 466);
+            this.Controls.Add(this.btnSearchSaved);
+            this.Controls.Add(this.preloadButton);
             this.Controls.Add(this.saveButton);
             this.Controls.Add(this.txtEndHex);
             this.Controls.Add(this.label4);
@@ -227,6 +251,8 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox txtEndHex;
         private System.Windows.Forms.Button saveButton;
+        private System.Windows.Forms.Button preloadButton;
+        private System.Windows.Forms.Button btnSearchSaved;
     }
 }
 
