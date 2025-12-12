@@ -38,6 +38,10 @@
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.txtMaxHexagons = new System.Windows.Forms.TextBox();
             this.cancelBtn = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.loadingPercentLabel = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // btnSearch
@@ -91,20 +95,20 @@
             // 
             this.progressBar1.Location = new System.Drawing.Point(467, 14);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(269, 23);
+            this.progressBar1.Size = new System.Drawing.Size(321, 23);
             this.progressBar1.TabIndex = 7;
             // 
             // txtMaxHexagons
             // 
             this.txtMaxHexagons.Location = new System.Drawing.Point(591, 55);
             this.txtMaxHexagons.Name = "txtMaxHexagons";
-            this.txtMaxHexagons.Size = new System.Drawing.Size(145, 20);
+            this.txtMaxHexagons.Size = new System.Drawing.Size(197, 20);
             this.txtMaxHexagons.TabIndex = 8;
             this.txtMaxHexagons.TextChanged += new System.EventHandler(this.txtMaxHexagons_TextChanged);
             // 
             // cancelBtn
             // 
-            this.cancelBtn.Location = new System.Drawing.Point(661, 101);
+            this.cancelBtn.Location = new System.Drawing.Point(693, 81);
             this.cancelBtn.Name = "cancelBtn";
             this.cancelBtn.Size = new System.Drawing.Size(95, 23);
             this.cancelBtn.TabIndex = 9;
@@ -112,11 +116,51 @@
             this.cancelBtn.UseVisualStyleBackColor = true;
             this.cancelBtn.Click += new System.EventHandler(this.cancelBtn_Click);
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(467, 58);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(123, 13);
+            this.label1.TabIndex = 10;
+            this.label1.Text = "Max Hexagons (Rooms):";
+            // 
+            // loadingPercentLabel
+            // 
+            this.loadingPercentLabel.AutoSize = true;
+            this.loadingPercentLabel.Location = new System.Drawing.Point(467, 40);
+            this.loadingPercentLabel.Name = "loadingPercentLabel";
+            this.loadingPercentLabel.Size = new System.Drawing.Size(33, 13);
+            this.loadingPercentLabel.TabIndex = 11;
+            this.loadingPercentLabel.Text = "100%";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(492, 196);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(184, 13);
+            this.label2.TabIndex = 12;
+            this.label2.Text = "Example: \"test\" is found in hexagon 0";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(492, 219);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(166, 13);
+            this.label3.TabIndex = 13;
+            this.label3.Text = "but \"testing\" isn\'t found until 621+";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 466);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.loadingPercentLabel);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.cancelBtn);
             this.Controls.Add(this.txtMaxHexagons);
             this.Controls.Add(this.progressBar1);
@@ -144,6 +188,10 @@
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.TextBox txtMaxHexagons;
         private System.Windows.Forms.Button cancelBtn;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label loadingPercentLabel;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
     }
 }
 

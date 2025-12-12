@@ -120,10 +120,14 @@ namespace LibraryOfBabel2
                                     }
 
                                     processedPages++;
+                                    double percent = (processedPages * 100.0) / totalPages; // use double for decimal precision
+
                                     Invoke((Action)(() =>
                                     {
                                         progressBar1.Value = processedPages;
+                                        loadingPercentLabel.Text = $"Loading: {percent:F2}%";
                                     }));
+
                                 }
                             }
                         }
@@ -133,6 +137,7 @@ namespace LibraryOfBabel2
 
             return locations;
         }
+
 
 
         private void ShowPage(string phrase)
